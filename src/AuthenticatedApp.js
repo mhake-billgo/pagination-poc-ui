@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { Component } from 'react';
 import {Auth} from "aws-amplify";
 import Amplify from "aws-amplify";
 import { ConfirmSignIn, ForgotPassword, RequireNewPassword, SignIn, VerifyContact, withAuthenticator } from 'aws-amplify-react';
@@ -29,7 +29,44 @@ Amplify.configure({
   }
 });
 
-export default withAuthenticator(App, {
+class AuthenticatedApp extends Component {
+
+  constructor(props) {
+    super(props);
+    this.state = {
+      jwtToken:''
+    };
+  }
+
+  componentDidMount() {
+    Auth.currentSession()
+      .then(session => {
+        console.log('Auth.currentSession():', session);
+        this.setState({
+          jwtToken: session.idToken.jwtToken
+        });
+      }).catch(err => console.log(err));
+    Auth.currentUserInfo().then(user => {
+      console.log('Auth.currentUserInfo():', user);
+    }).catch(err => {
+      console.log('Auth error:', err);
+    });
+  }
+
+  handleLogout = async event => {
+    console.log("Logging out");
+    await Auth.signOut();
+  };
+
+  render() {
+    return (
+      <App handleLogout={this.handleLogout} />
+    );
+  }
+}
+
+
+export default withAuthenticator(AuthenticatedApp, {
   includeGreetings: false,
   authenticatorComponents: [
     <SignIn/>,
