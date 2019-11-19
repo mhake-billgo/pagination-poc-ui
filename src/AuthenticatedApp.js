@@ -3,8 +3,11 @@ import {Auth} from "aws-amplify";
 import Amplify from "aws-amplify";
 import { ConfirmSignIn, ForgotPassword, RequireNewPassword, SignIn, VerifyContact, withAuthenticator } from 'aws-amplify-react';
 import App from './App';
-
-const GRAPHQL_URL = '/graphql';
+import {createHttpLink} from "apollo-link-http";
+import {setContext} from "apollo-link-context";
+import {ApolloClient} from "apollo-client";
+import {InMemoryCache} from "apollo-cache-inmemory";
+import { ApolloProvider } from '@apollo/react-hooks';
 
 Amplify.configure({
   Auth: {
@@ -12,21 +15,7 @@ Amplify.configure({
     region: process.env.REACT_APP_AWS_REGION,
     userPoolId: process.env.REACT_APP_AWS_USER_POOL_ID,
     userPoolWebClientId: process.env.REACT_APP_AWS_USER_POOL_WEB_CLIENT_ID,
-  },
-  API: {
-    // Note the API configuration adds `graphql_endpoint_iam_region`. This is to
-    // sign requests that are passing through API gateway as documented here:
-    // https://aws-amplify.github.io/docs/js/api#set-custom-request-headers-for-graphql
-    // It appears that we can either do this, or set the Authorization header explicitly
-    // via the `graphql_headers` property. Dont know which is preferred.
-    graphql_headers: async () => {
-      return Auth.currentSession()
-        .then(session => {
-          return { 'Authorization': session.idToken.jwtToken}
-        }).catch(err => console.log(err));
-    },
-    graphql_endpoint: GRAPHQL_URL,
-  }
+   }
 });
 
 class AuthenticatedApp extends Component {
@@ -34,38 +23,70 @@ class AuthenticatedApp extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      jwtToken:''
+      apolloClient:undefined
     };
   }
 
   componentDidMount() {
+    /**
+     * Set up a listener on the AWS Auth object. Once a cognito session is established
+     * then initialize an Apollo Client using the Cognito JWT token
+     */
     Auth.currentSession()
       .then(session => {
-        console.log('Auth.currentSession():', session);
+        console.log('Auth session established. Initializing Apollo client...');
+
+        const httpLink = createHttpLink({
+          uri: 'https://www.uncheck.billgo-dev.com/graphql',
+        });
+
+        const authLink = setContext((_, { headers }) => {
+          return {
+            headers: {
+              ...headers,
+              authorization: session.idToken.jwtToken,
+            }
+          }
+        });
+
+        const client = new ApolloClient({
+          link: authLink.concat(httpLink),
+          cache: new InMemoryCache()
+        });
+
+        // Save the client to the state
         this.setState({
-          jwtToken: session.idToken.jwtToken
+          apolloClient: client
         });
       }).catch(err => console.log(err));
-    Auth.currentUserInfo().then(user => {
-      console.log('Auth.currentUserInfo():', user);
-    }).catch(err => {
-      console.log('Auth error:', err);
-    });
   }
 
   handleLogout = async event => {
     console.log("Logging out");
+    const { apolloClient } = this.state;
+    if(apolloClient) {
+      console.log('Resetting Apollo Client store');
+      await apolloClient.resetStore();
+    }
     await Auth.signOut();
   };
 
   render() {
-    const { jwtToken } = this.state;
+    const { apolloClient } = this.state;
+
+    if(!apolloClient) {
+      console.log('apolloClient not initialized yet, not rendering app');
+      // Return null to prevent rendering, until we have a valid login and valid Apollo Client
+      return null;
+    }
+
     return (
-      <App handleLogout={this.handleLogout} jwtToken={jwtToken} />
+      <ApolloProvider client={apolloClient}>
+        <App handleLogout={this.handleLogout}/>
+      </ApolloProvider>
     );
   }
 }
-
 
 export default withAuthenticator(AuthenticatedApp, {
   includeGreetings: false,
