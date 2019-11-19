@@ -1,6 +1,6 @@
 import React from 'react';
 
-export default function header(props) {
+export default function Header(props) {
   const {supplierName, userEmail, onLogout} = props;
 
   return (

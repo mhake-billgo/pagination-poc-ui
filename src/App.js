@@ -31,12 +31,15 @@ function App(props) {
 
   const userEmail = data ? data.currentUser.email : '';
   const supplierName = data ? data.currentUser.suppliers[0].legalName : '';
-  const supplierId = data ? data.currentUser.suppliers[0].id : '';
+  const supplierId = data ? data.currentUser.suppliers[0].id : undefined;
 
   return (
     <div className="app">
       <Header onLogout={handleLogout} supplierName={supplierName} userEmail={userEmail}/>
-      <Payments supplierId={supplierId}/>
+      {supplierId &&
+        <Payments supplierId={supplierId}/>
+      }
+
     </div>
   );
 }
