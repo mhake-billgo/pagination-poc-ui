@@ -59,8 +59,9 @@ class AuthenticatedApp extends Component {
   };
 
   render() {
+    const { jwtToken } = this.state;
     return (
-      <App handleLogout={this.handleLogout} />
+      <App handleLogout={this.handleLogout} jwtToken={jwtToken} />
     );
   }
 }
