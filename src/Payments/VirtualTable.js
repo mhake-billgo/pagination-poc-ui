@@ -1,43 +1,75 @@
-import React, {Fragment} from 'react';
-import {Column, Table} from 'react-virtualized';
+import React, {Fragment, useState, useEffect} from 'react';
+import {Column, Table, InfiniteLoader} from 'react-virtualized';
 import 'react-virtualized/styles.css';
 
-// const list = [
-//   {payFromName:'Brian Vaughn', grossAmount: '123.33', accountNumber: 'ABC-123', depositTimestamp:'123333333333'},
-// ];
-
 export default function VirtualTable(props) {
-  const {loading, error, data, refetch, pageSize, setPageSize, supplierId} = props;
-  const edges = data ? data.supplier.transactionsConnection.edges : [];
+  const [tableItems, setTableItems] = useState([]);
+  const [loadPromise, setLoadPromise] = useState(undefined);
+  const {loading, error, data, refetch, pageSize, supplierId} = props;
   const pageInfo = data ? data.supplier.transactionsConnection.pageInfo : undefined;
   const totalCount = data ? data.supplier.transactionsConnection.totalCount : undefined;
 
-  const list = edges.map(edge => {
-    const { accountNumber, payFrom, grossAmount, depositTimestamp } = edge.node;
-    return {
-      payFromName:payFrom.name,
-      grossAmount,
-      accountNumber,
-      depositTimestamp
-    };
-  });
+  const appendMorePayments = (newItems) => {
+    setTableItems(tableItems.concat(newItems));
+    if(loadPromise) {
+      loadPromise(); // Invoke the resolve of the infinite load promise
+    }
+  };
+
+  useEffect(() => {
+    if(data) {
+      const newItems = data.supplier.transactionsConnection.edges.map(edge => {
+        const { accountNumber, payFrom, grossAmount, depositTimestamp } = edge.node;
+        return {
+          payFromName:payFrom.name,
+          grossAmount,
+          accountNumber,
+          depositTimestamp
+        };
+      });
+      appendMorePayments(newItems);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data]);
 
   console.log('Payments loading, data, error, pageInfo:', loading, data, error, pageInfo);
+
+  const loadMore = () => {
+    // Only load more if there are more, otherwise do nothing
+    if(totalCount > pageInfo.endCursor) {
+      refetch({id:supplierId, pageSize:pageSize, after:pageInfo.endCursor});
+      // we need to return a promise
+      return new Promise((resolve, reject) => {
+        setLoadPromise(resolve);
+      })
+    }
+  };
+
   return (
     <Fragment>
-      <Table
-        width={900}
-        height={300}
-        headerHeight={20}
-        rowHeight={30}
-        rowCount={list.length}
-        rowGetter={({index}) => list[index]}>
-        <Column label="From" dataKey="payFromName" width={300} />
-        <Column label="Amount" dataKey="grossAmount" width={300} />
-        <Column label="Account" dataKey="accountNumber" width={300} />
-        <Column label="Date" dataKey="depositTimestamp" width={300} />
-
-      </Table>
+      <InfiniteLoader
+        isRowLoaded={({ index}) => !!tableItems[index]}
+        loadMoreRows={loadMore}
+        rowCount={1000000}
+      >
+        {({onRowsRendered, registerChild}) => (
+          <Table
+            ref={registerChild}
+            onRowsRendered={onRowsRendered}
+            width={900}
+            height={300}
+            headerHeight={20}
+            rowHeight={30}
+            rowCount={tableItems.length}
+            rowGetter={({index}) => tableItems[index]}>
+            <Column label="From" dataKey="payFromName" width={300} />
+            <Column label="Amount" dataKey="grossAmount" width={300} />
+            <Column label="Account" dataKey="accountNumber" width={300} />
+            <Column label="Date" dataKey="depositTimestamp" width={300} />
+          </Table>
+        )}
+      </InfiniteLoader>
+      { pageInfo && loading && <span>Loading records {parseInt(pageInfo.endCursor)+ 1} to {parseInt(pageInfo.endCursor) + parseInt(pageSize)}...</span>}
     </Fragment>
   );
 }
