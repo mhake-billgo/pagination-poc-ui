@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useState} from 'react';
 import gql from "graphql-tag";
 import {useQuery} from "@apollo/react-hooks";
 import './payments.css';
@@ -120,16 +120,20 @@ const renderTableData = (edges) => {
 
 export default function Payments(props) {
   const {supplierId} = props;
-  const { loading, error, data, refetch } = useQuery(PAYMENTS,{variables: {id: supplierId, pageSize: 20}});
-
+  const [pageSize, setPageSize] = useState(20);
+  const { loading, error, data, refetch } = useQuery(PAYMENTS,{variables: {id:supplierId, pageSize:pageSize}});
   const edges = data ? data.supplier.transactionsConnection.edges : [];
   const pageInfo = data ? data.supplier.transactionsConnection.pageInfo : undefined;
   const totalCount = data ? data.supplier.transactionsConnection.totalCount : undefined;
 
   const nextPage = () => {
-      console.log('next');
-      refetch({id: supplierId, pageSize: 20, after:pageInfo.endCursor});
+      refetch({id:supplierId, pageSize:pageSize, after:pageInfo.endCursor});
   };
+
+   const prevPage = () => {
+       const after = pageInfo.startCursor-(pageSize+1);
+       refetch({id:supplierId, pageSize:pageSize, after:after});
+   };
 
   console.log('Payments loading, data, error, pageInfo:', loading, data, error, pageInfo);
   return (
@@ -148,12 +152,14 @@ export default function Payments(props) {
             </tbody>
         </table>
 
-        { pageInfo != null &&
-        <React.Fragment>
+        { loading && <span>Loading...</span> }
+
+        { !loading && pageInfo != null &&
+        <div className='payments__pagination'>
             <span>Displaying {pageInfo.startCursor} to {pageInfo.endCursor} of: {totalCount}</span>
-            <button>Previous</button>
-            <button onClick={nextPage}>Next</button>
-        </React.Fragment>
+            <button className='payments__pagination_button' onClick={prevPage}>Previous</button>
+            <button className='payments__pagination_button' onClick={nextPage}>Next</button>
+        </div>
         }
     </div>
 

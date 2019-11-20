@@ -7,3 +7,15 @@
     align-items: center;
     justify-content: center;
 }
+
+.payments__pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.payments__pagination_button {
+    margin-left: 10px;
+    height: 20px;
+    width: 50px;
+}
