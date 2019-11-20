@@ -15,12 +15,6 @@ body {
   overflow-x: hidden;
 }
 
-header {
-  height: 50px;
-  box-shadow: 0 2px 2px #e6e6e6;
-  padding: 10px;
-}
-
 section { padding: 80px 0; }
 
 /* ---------Buttons------------ */
@@ -46,4 +40,23 @@ section { padding: 80px 0; }
 
 .btn-full:hover {
   border: 1px solid #cf6d17;
+}
+
+/* Toolbar */
+.toolbar {
+  height: 50px;
+  box-shadow: 0 2px 2px #e6e6e6;
+  padding: 10px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.toolbar__user {
+  margin-right: auto;
+}
+
+.toolbar__user span:first-child {
+  font-weight: bold;
 }
