@@ -16,6 +16,16 @@
 
 .payments__pagination_button {
     margin-left: 10px;
-    height: 20px;
+    height: 25px;
     width: 50px;
+    border-radius: 3px;
 }
+
+.payments__pagination_selectlabel {
+    margin-left: 20px;
+}
+
+.payments__pagination_select {
+    margin-left: 10px;
+}
+

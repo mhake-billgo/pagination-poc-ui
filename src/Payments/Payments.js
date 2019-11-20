@@ -127,12 +127,25 @@ export default function Payments(props) {
   const totalCount = data ? data.supplier.transactionsConnection.totalCount : undefined;
 
   const nextPage = () => {
-      refetch({id:supplierId, pageSize:pageSize, after:pageInfo.endCursor});
+      if(totalCount > pageInfo.endCursor) {
+          refetch({id:supplierId, pageSize:pageSize, after:pageInfo.endCursor});
+      } else {
+          console.warn('No more pages');
+      }
   };
 
    const prevPage = () => {
        const after = pageInfo.startCursor-(pageSize+1);
-       refetch({id:supplierId, pageSize:pageSize, after:after});
+       if(after >= 0) {
+           // Dont try to fetch starting at a negative number
+           refetch({id:supplierId, pageSize:pageSize, after:after});
+       } else {
+           console.warn("Not fetching starting with record: ", after);
+       }
+   };
+
+   const onPageSizeChange = (event) => {
+       setPageSize(event.target.value);
    };
 
   console.log('Payments loading, data, error, pageInfo:', loading, data, error, pageInfo);
@@ -157,8 +170,16 @@ export default function Payments(props) {
         { !loading && pageInfo != null &&
         <div className='payments__pagination'>
             <span>Displaying {pageInfo.startCursor} to {pageInfo.endCursor} of: {totalCount}</span>
+
             <button className='payments__pagination_button' onClick={prevPage}>Previous</button>
             <button className='payments__pagination_button' onClick={nextPage}>Next</button>
+            <label className='payments__pagination_selectlabel' htmlFor='pageSize'>Page Size</label>
+            <select className='payments__pagination_select' id='pageSize' onChange={onPageSizeChange} value={pageSize}>
+                <option value="10">10</option>
+                <option value="20">20</option>
+                <option value="50">50</option>
+                <option value="100">100</option>
+            </select>
         </div>
         }
     </div>
