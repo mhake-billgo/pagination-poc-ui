@@ -98,14 +98,45 @@ const PAYMENTS = gql`
         }
 `;
 
+const renderTableData = (edges) => {
+    return edges.map((edge, index) => {
+        const { accountNumber, payFrom } = edge.node;
+        return (
+          <tr key={index}>
+              <td>{accountNumber}</td>
+              <td>{payFrom.name}</td>
+          </tr>
+        )
+    })
+};
+
 export default function Payments(props) {
   const {supplierId} = props;
   const { loading, error, data } = useQuery(PAYMENTS,{variables: { id: supplierId }});
 
-  console.log('payments loading, data, error:',loading, data, error);
+  const edges = data ? data.supplier.transactionsConnection.edges : [];
+  const pageInfo = data ? data.supplier.transactionsConnection.pageInfo : undefined;
+  const totalCount = data ? data.supplier.transactionsConnection.totalCount : undefined;
+
+  console.log('Payments loading, data, error, pageInfo:', loading, data, error, pageInfo);
   return (
     <div>
-      PAYMENTS for {supplierId}
+        <h2>PAYMENTS</h2>
+
+        { pageInfo != null &&
+            <span>Displaying {pageInfo.startCursor} to {pageInfo.endCursor} of: {totalCount}</span>
+        }
+
+        <table>
+            <tbody>
+                <tr>
+                    <th>From</th>
+                    <th>Amount</th>
+                </tr>
+                {renderTableData(edges)}
+            </tbody>
+        </table>
     </div>
+
   );
 }
