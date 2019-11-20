@@ -17,6 +17,11 @@ export default function VirtualTable(props) {
   };
 
   useEffect(() => {
+    const getDateStr = (timestamp) => {
+      const date = new Date(parseInt(timestamp));
+      return `${date.getFullYear()}-${(date.getMonth()+1)}-${(date.getDate()+1)}`;
+    };
+
     if(data) {
       const newItems = data.supplier.transactionsConnection.edges.map(edge => {
         const { accountNumber, payFrom, grossAmount, depositTimestamp } = edge.node;
@@ -24,7 +29,7 @@ export default function VirtualTable(props) {
           payFromName:payFrom.name,
           grossAmount,
           accountNumber,
-          depositTimestamp
+          date: getDateStr(depositTimestamp)
         };
       });
       appendMorePayments(newItems);
@@ -65,7 +70,7 @@ export default function VirtualTable(props) {
             <Column label="From" dataKey="payFromName" width={300} />
             <Column label="Amount" dataKey="grossAmount" width={300} />
             <Column label="Account" dataKey="accountNumber" width={300} />
-            <Column label="Date" dataKey="depositTimestamp" width={300} />
+            <Column label="Date" dataKey="date" width={300} />
           </Table>
         )}
       </InfiniteLoader>
