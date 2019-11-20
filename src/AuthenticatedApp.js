@@ -8,6 +8,9 @@ import {setContext} from "apollo-link-context";
 import {ApolloClient} from "apollo-client";
 import {InMemoryCache} from "apollo-cache-inmemory";
 import { ApolloProvider } from '@apollo/react-hooks';
+import introspectionQueryResultData from './fragmentTypes.json';
+import { IntrospectionFragmentMatcher } from 'apollo-cache-inmemory';
+
 
 Amplify.configure({
   Auth: {
@@ -49,9 +52,15 @@ class AuthenticatedApp extends Component {
           }
         });
 
+        const fragmentMatcher = new IntrospectionFragmentMatcher({
+          introspectionQueryResultData
+        });
+
+        const cache = new InMemoryCache({ fragmentMatcher });
+
         const client = new ApolloClient({
           link: authLink.concat(httpLink),
-          cache: new InMemoryCache()
+          cache: cache
         });
 
         // Save the client to the state
