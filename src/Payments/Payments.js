@@ -1,7 +1,8 @@
 import React, {useState} from 'react';
 import gql from "graphql-tag";
 import {useQuery} from "@apollo/react-hooks";
-import PaginatedTable from "./PaginatedTable";
+//import PaginatedTable from "./PaginatedTable";
+import VirtualTable from "./VirtualTable";
 import './payments.css';
 
 
@@ -108,7 +109,9 @@ export default function Payments(props) {
   return (
     <div className='payments'>
         <h2>PAYMENTS</h2>
-        <PaginatedTable loading={loading} error={error} data={data} refetch={refetch} supplierId={supplierId} pageSize={pageSize} setPageSize={setPageSize}/>
+        {/*<PaginatedTable loading={loading} error={error} data={data} refetch={refetch} supplierId={supplierId} pageSize={pageSize} setPageSize={setPageSize}/>*/}
+        <VirtualTable loading={loading} error={error} data={data} refetch={refetch} supplierId={supplierId} pageSize={pageSize} setPageSize={setPageSize} />
+
     </div>
 
   );
