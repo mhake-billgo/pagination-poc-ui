@@ -1,6 +1,7 @@
 import React from 'react';
 import gql from "graphql-tag";
 import {useQuery} from "@apollo/react-hooks";
+import './payments.css';
 
 
 const PAYMENTS = gql`  
@@ -100,11 +101,13 @@ const PAYMENTS = gql`
 
 const renderTableData = (edges) => {
     return edges.map((edge, index) => {
-        const { accountNumber, payFrom } = edge.node;
+        const { accountNumber, payFrom, grossAmount } = edge.node;
         return (
           <tr key={index}>
-              <td>{accountNumber}</td>
               <td>{payFrom.name}</td>
+              <td>{grossAmount}</td>
+              <td>{accountNumber}</td>
+
           </tr>
         )
     })
@@ -120,7 +123,7 @@ export default function Payments(props) {
 
   console.log('Payments loading, data, error, pageInfo:', loading, data, error, pageInfo);
   return (
-    <div>
+    <div className='payments'>
         <h2>PAYMENTS</h2>
 
         { pageInfo != null &&
@@ -132,6 +135,7 @@ export default function Payments(props) {
                 <tr>
                     <th>From</th>
                     <th>Amount</th>
+                    <th>Account</th>
                 </tr>
                 {renderTableData(edges)}
             </tbody>
