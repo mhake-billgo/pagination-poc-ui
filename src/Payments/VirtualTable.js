@@ -4,17 +4,10 @@ import 'react-virtualized/styles.css';
 
 export default function VirtualTable(props) {
   const [tableItems, setTableItems] = useState([]);
-  const [loadPromise, setLoadPromise] = useState(undefined);
+  const [loadPromiseResolver, setLoadPromiseResolver] = useState(undefined);
   const {loading, error, data, refetch, pageSize, supplierId} = props;
   const pageInfo = data ? data.supplier.transactionsConnection.pageInfo : undefined;
   const totalCount = data ? data.supplier.transactionsConnection.totalCount : undefined;
-
-  const appendMorePayments = (newItems) => {
-    setTableItems(tableItems.concat(newItems));
-    if(loadPromise) {
-      loadPromise(); // Invoke the resolve of the infinite load promise
-    }
-  };
 
   useEffect(() => {
     const getDateStr = (timestamp) => {
@@ -32,8 +25,14 @@ export default function VirtualTable(props) {
           date: getDateStr(depositTimestamp)
         };
       });
-      appendMorePayments(newItems);
+      //appendMorePayments(newItems);
+      setTableItems(tableItems.concat(newItems));
+      if(loadPromiseResolver) {
+        loadPromiseResolver(); // Invoke the resolve of the infinite load promise
+      }
     }
+    // ESLint complains here that this effect uses setTableItems and tableItems but
+    // does not list them in dependency array. This warning can be ignored
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data]);
 
@@ -43,9 +42,9 @@ export default function VirtualTable(props) {
     // Only load more if there are more, otherwise do nothing
     if(totalCount > pageInfo.endCursor) {
       refetch({id:supplierId, pageSize:pageSize, after:pageInfo.endCursor});
-      // we need to return a promise
+      // Return a promise that is to be resolved when the additional data is loaded
       return new Promise((resolve, reject) => {
-        setLoadPromise(resolve);
+        setLoadPromiseResolver(resolve);
       })
     }
   };
