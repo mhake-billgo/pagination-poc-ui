@@ -69,3 +69,9 @@ h3 {
   font-size: 110%;
   margin-bottom: 15px;
 }
+
+/** Main Body */
+.main-body {
+  display: flex;
+  align-items: flex-start;
+}

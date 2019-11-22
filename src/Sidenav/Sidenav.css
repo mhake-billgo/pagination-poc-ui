@@ -1,0 +1,14 @@
+
+.sidenav {
+    box-shadow: 2px 0px 2px #e6e6e6;
+    height: 100vh;
+    padding: 10px;
+}
+
+.sidenav a {
+    padding: 6px 8px 6px 16px;
+    text-decoration: none;
+    font-size: 100%;
+    color: black;
+    display: block;
+}
