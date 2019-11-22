@@ -9,7 +9,6 @@ import './payments.css';
 const PAYMENTS = gql`  
         query supplier($id: String! $pageSize: Int! $after: String){
             supplier(id: $id){
-                legalName
                 transactionsConnection (first: $pageSize after: $after) {
                     totalCount
                     pageInfo {
@@ -104,13 +103,13 @@ const PAYMENTS = gql`
 export default function Payments(props) {
   const {supplierId} = props;
   const [pageSize, setPageSize] = useState(20);
-  const { loading, error, data, refetch } = useQuery(PAYMENTS,{variables: {id:supplierId, pageSize:pageSize}});
+  const { loading, error, data, fetchMore} = useQuery(PAYMENTS,{variables: {id:supplierId, pageSize:pageSize}});
 
   return (
     <div className='payments'>
         <h2>PAYMENTS</h2>
         {/*<PaginatedTable loading={loading} error={error} data={data} refetch={refetch} supplierId={supplierId} pageSize={pageSize} setPageSize={setPageSize}/>*/}
-        <VirtualTable loading={loading} error={error} data={data} refetch={refetch} supplierId={supplierId} pageSize={pageSize} setPageSize={setPageSize} />
+        <VirtualTable loading={loading} error={error} data={data} fetchMore={fetchMore} supplierId={supplierId} pageSize={pageSize} setPageSize={setPageSize} />
 
     </div>
 

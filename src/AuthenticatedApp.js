@@ -60,7 +60,13 @@ class AuthenticatedApp extends Component {
 
         const client = new ApolloClient({
           link: authLink.concat(httpLink),
-          cache: cache
+          cache: cache,
+          defaultOptions: {
+            watchQuery: {
+              fetchPolicy: 'cache-first',
+              notifyOnNetworkStatusChange: true
+            },
+          },
         });
 
         // Save the client to the state

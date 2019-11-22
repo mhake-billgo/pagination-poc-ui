@@ -1,51 +1,61 @@
-import React, {Fragment, useState, useEffect} from 'react';
+import React, {Fragment} from 'react';
 import {Column, Table, InfiniteLoader} from 'react-virtualized';
 import 'react-virtualized/styles.css';
 
 export default function VirtualTable(props) {
-  const [tableItems, setTableItems] = useState([]);
-  const [loadPromiseResolver, setLoadPromiseResolver] = useState(undefined);
-  const {loading, error, data, refetch, pageSize, supplierId} = props;
+  const {loading, error, data, fetchMore, pageSize, supplierId} = props;
   const pageInfo = data ? data.supplier.transactionsConnection.pageInfo : undefined;
   const totalCount = data ? data.supplier.transactionsConnection.totalCount : undefined;
 
-  useEffect(() => {
-    const getDateStr = (timestamp) => {
-      const date = new Date(parseInt(timestamp));
-      return `${date.getFullYear()}-${(date.getMonth()+1)}-${(date.getDate()+1)}`;
-    };
+  if(error) {
+    console.error("Error in VirtualTable",error);
+  }
+  const getDateStr = (timestamp) => {
+    const date = new Date(parseInt(timestamp));
+    return `${date.getFullYear()}-${(date.getMonth()+1)}-${(date.getDate()+1)}`;
+  };
 
-    if(data) {
-      const newItems = data.supplier.transactionsConnection.edges.map(edge => {
-        const { accountNumber, payFrom, grossAmount, depositTimestamp } = edge.node;
-        return {
-          payFromName:payFrom.name,
-          grossAmount,
-          accountNumber,
-          date: getDateStr(depositTimestamp)
-        };
-      });
-      //appendMorePayments(newItems);
-      setTableItems(tableItems.concat(newItems));
-      if(loadPromiseResolver) {
-        loadPromiseResolver(); // Invoke the resolve of the infinite load promise
-      }
-    }
-    // ESLint complains here that this effect uses setTableItems and tableItems but
-    // does not list them in dependency array. This warning can be ignored
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [data]);
-
-  console.log('Payments loading, data, error, pageInfo:', loading, data, error, pageInfo);
+  let tableItems = [];
+  if(data) {
+    tableItems = data.supplier.transactionsConnection.edges.map(edge => {
+      const {accountNumber, payFrom, grossAmount, depositTimestamp} = edge.node;
+      return {
+        payFromName: payFrom.name,
+        grossAmount,
+        accountNumber,
+        date: getDateStr(depositTimestamp)
+      };
+    });
+  };
 
   const loadMore = () => {
     // Only load more if there are more, otherwise do nothing
-    if(totalCount > pageInfo.endCursor) {
-      refetch({id:supplierId, pageSize:pageSize, after:pageInfo.endCursor});
-      // Return a promise that is to be resolved when the additional data is loaded
-      return new Promise((resolve, reject) => {
-        setLoadPromiseResolver(resolve);
-      })
+    if(!loading && totalCount > pageInfo.endCursor) {
+      fetchMore({
+        variables: {id:supplierId, pageSize:pageSize, after:pageInfo.endCursor},
+        updateQuery: (previousResult, { fetchMoreResult }) => {
+          const previousEdges = previousResult.supplier.transactionsConnection.edges;
+          const newEdges = fetchMoreResult.supplier.transactionsConnection.edges;
+
+          return {
+            supplier: {
+              transactionsConnection: {
+                totalCount: previousResult.supplier.transactionsConnection.totalCount,
+                pageInfo: {
+                  startCursor: previousResult.supplier.transactionsConnection.pageInfo.startCursor,
+                  endCursor: fetchMoreResult.supplier.transactionsConnection.pageInfo.endCursor,
+                  hasNextPage: fetchMoreResult.supplier.transactionsConnection.pageInfo.hasNextPage,
+                  hasPreviousPage: previousResult.supplier.transactionsConnection.pageInfo.hasPreviousPage,
+                  __typename: 'PageInfo'
+                },
+                edges: [...previousEdges, ...newEdges],
+                __typename: 'SupplierTransactionsConnection'
+              },
+              __typename: 'Supplier'
+            },
+          };
+        }
+      });
     }
   };
 
