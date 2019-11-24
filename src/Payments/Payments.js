@@ -101,6 +101,7 @@ const PAYMENTS = gql`
 `;
 
 export default function Payments(props) {
+  console.log('Payments()');
   const {supplierId} = props;
   const [pageSize, setPageSize] = useState(20);
   const { loading, error, data, fetchMore} = useQuery(PAYMENTS,{variables: {id:supplierId, pageSize:pageSize}});

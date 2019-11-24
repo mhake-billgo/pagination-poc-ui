@@ -1,7 +1,5 @@
 import React from 'react';
-import {
-  Link
-} from "react-router-dom";
+import { Link } from "@reach/router"
 import './Sidenav.css';
 
 export default function Sidenav(props) {

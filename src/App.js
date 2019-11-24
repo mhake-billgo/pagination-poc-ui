@@ -1,13 +1,13 @@
 import React from 'react';
 import { useQuery } from '@apollo/react-hooks';
 import gql from 'graphql-tag';
-import {
-  Switch,
-  Route, BrowserRouter as Router
-} from "react-router-dom";
+
+import { Router } from "@reach/router"
+
 import Header from './Header';
 import Sidenav from "./Sidenav";
 import Payments from './Payments';
+import Info from './Info';
 import './App.css';
 
 
@@ -40,7 +40,7 @@ function App(props) {
 
   return (
     <div className="app">
-      <Router>
+
         <Header onLogout={handleLogout} supplierName={supplierName} userEmail={userEmail}/>
         <div className='main-body'>
           <Sidenav/>
@@ -50,19 +50,13 @@ function App(props) {
           </div>
           }
           {supplierId &&
-          <Switch>
-            <Route path="/info">
-              <div>
-                <h2>Info</h2>
-              </div>
-            </Route>
-            <Route path="/payments">
-              <Payments supplierId={supplierId}/>
-            </Route>
-          </Switch>
+          <Router>
+              <Info path="/info"/>
+              <Payments path="/payments" supplierId={supplierId}/>
+          </Router>
           }
         </div>
-      </Router>
+
     </div>
   );
 }
